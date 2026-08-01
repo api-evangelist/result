@@ -1,0 +1,17 @@
+generated: '2026-07-20'
+method: probed
+source: live DNS/TLS/HTTP probes of apis.yml + OpenAPI hosts
+hosts:
+- host: result.dev
+  https: true
+  tls_version: TLSv1.3
+  cert_expires: Oct 11 12:18:41 2026 GMT
+  hsts: true
+  hsts_max_age: 63072000
+domains:
+- domain: result.dev
+  dnssec: false
+  caa: []
+  spf: true
+  dmarc: true
+  dmarc_policy: none

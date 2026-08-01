@@ -1,7 +1,26 @@
 aid: result
+accessModel:
+  pricing: unknown
+  onboarding: approval
+  trial: false
+  try_now: false
+  public: false
+  label: Requires approval
+  confidence: medium
+  source: []
+  generated: '2026-07-22'
+  method: derived
+image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/icons/result.png
 name: Result
-description: Result is a company surfaced as a portfolio company of y-combinator and added to the API
-  Evangelist network as a stub for enrichment. This profile is a lead awaiting the enrichment pipeline.
+description: >-
+  Result is a Y Combinator (Spring 2026) all-in-one business operating system that lets
+  internet entrepreneurs start and run companies end-to-end. The platform unifies app
+  development with built-in payments, AI-powered marketing and content creation, automated
+  customer support, financial analytics, branding and design tools, market research, SEO
+  optimization, legal incorporation, and investor fundraising into a single surface, tied
+  together by a "Company Brain" that retains business context from day one. Founded by
+  Aaryan Kushwah (CEO) and Savio Martin (CTO), the product is in private beta with a public
+  waitlist and does not yet publish a developer/API surface.
 url: https://raw.githubusercontent.com/api-evangelist/result/refs/heads/main/apis.yml
 x-type: company
 x-source: vc-portfolio
@@ -11,12 +30,32 @@ x-tier: stub
 x-tier-reason: portfolio-lead
 specificationVersion: '0.20'
 created: '2026-07-17'
-modified: '2026-07-17'
+modified: '2026-07-20'
 tags:
 - Company
+- Business Operations
+- SaaS
+- Entrepreneurship
+- Payments
+- Marketing
+- No-Code
+- Startups
+- Artificial Intelligence
 apis: []
+common:
+- type: DomainSecurity
+  url: security/result-domain-security.yml
+- type: Website
+  url: https://result.dev/
+- type: SignUp
+  url: https://result.dev/
 maintainers:
 - FN: Kin Lane
   email: kin@apievangelist.com
 - FN: APIs.json
   email: info@apis.io
+x-enrichment:
+  date: '2026-07-20'
+  status: minimal
+  artifacts_added: 1
+  pass: local-v1
