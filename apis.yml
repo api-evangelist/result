@@ -1,36 +1,46 @@
 aid: result
 accessModel:
-  pricing: unknown
-  onboarding: approval
+  pricing: paid
+  onboarding: self-service
   trial: false
   try_now: false
-  public: false
-  label: Requires approval
-  confidence: medium
-  source: []
-  generated: '2026-07-22'
-  method: derived
+  public: true
+  label: Paid subscription, self-service sign-up
+  confidence: high
+  source:
+  - https://result.dev/pricing
+  - https://docs.result.dev/
+  generated: '2026-08-13'
+  method: searched
 image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/icons/result.png
 name: Result
 description: >-
-  Result is a Y Combinator (Spring 2026) all-in-one business operating system that lets
-  internet entrepreneurs start and run companies end-to-end. The platform unifies app
-  development with built-in payments, AI-powered marketing and content creation, automated
-  customer support, financial analytics, branding and design tools, market research, SEO
-  optimization, legal incorporation, and investor fundraising into a single surface, tied
-  together by a "Company Brain" that retains business context from day one. Founded by
-  Aaryan Kushwah (CEO) and Savio Martin (CTO), the product is in private beta with a public
-  waitlist and does not yet publish a developer/API surface.
+  Result is a Y Combinator (Spring 2026) all-in-one business operating system, operated by
+  Foundative Inc. (a Delaware corporation), that lets internet entrepreneurs start and run
+  companies end-to-end. The platform unifies app development with built-in payments,
+  AI-powered marketing and content creation, automated customer support, financial
+  analytics, branding and design tools, market research, SEO optimization, legal
+  incorporation, and investor fundraising into a single surface, tied together by a
+  "Company Brain" that retains business context from day one. Result ships a real developer
+  surface on top of that product: Result Backend is a hosted app backend (Postgres with
+  row-level security, Google/GitHub and email-password auth, file storage, WebSocket
+  realtime channels with presence, serverless Deno functions, hosted AI chat/embeddings/
+  image models, transactional email, cookieless web analytics, embedded customer support
+  and Paddle-backed payments) consumed through the first-party @resultdev/sdk client and
+  the @resultdev/cli admin CLI. Result also operates a remote, OAuth-protected Model
+  Context Protocol server at https://api.result.dev/mcp exposing 74 tools across six
+  categories, so coding agents and MCP clients can plan, build, publish, sell and support
+  a business through the same validated tool surface the product uses internally. Founded
+  by Aaryan Kushwah (CEO) and Savio Martin (CTO).
 url: https://raw.githubusercontent.com/api-evangelist/result/refs/heads/main/apis.yml
 x-type: company
 x-source: vc-portfolio
 x-backed-by:
 - y-combinator
-x-tier: stub
-x-tier-reason: portfolio-lead
+x-legal-entity: Foundative Inc. (Delaware)
 specificationVersion: '0.20'
 created: '2026-07-17'
-modified: '2026-07-20'
+modified: '2026-08-13'
 tags:
 - Company
 - Business Operations
@@ -41,21 +51,150 @@ tags:
 - No-Code
 - Startups
 - Artificial Intelligence
-apis: []
+- Backend as a Service
+- Model Context Protocol
+- Agents
+- Database
+- Authentication
+- Storage
+- Serverless
+- Realtime
+apis:
+- name: Result MCP Server
+  description: >-
+    Remote Model Context Protocol server exposing 74 tools across six categories (plan and
+    operate, build and ship, Company Brain, audience growth, sell and support, run the
+    company) — the same tools Result uses inside the product, under the same validation,
+    permission and business-ownership rules. Requires an OAuth 2.1 authorization-code flow
+    against Descope; anonymous tools/list returns 401 invalid_token.
+  humanURL: https://result.dev/mcp
+  baseURL: https://api.result.dev/mcp
+  tags:
+  - Model Context Protocol
+  - Agents
+  - Business Operations
+  properties:
+  - type: MCPServer
+    url: mcp/result-mcp.yml
+  - type: Documentation
+    url: https://result.dev/mcp
+- name: Result Backend
+  description: >-
+    Hosted application backend consumed through the first-party @resultdev/sdk client and
+    administered with @resultdev/cli: PostgREST-style queries against Postgres with
+    row-level security, Google/GitHub OAuth and email-password authentication, public and
+    private file storage with signed URLs, WebSocket realtime channels with presence,
+    serverless Deno functions, hosted AI chat/streaming/embeddings/image generation,
+    transactional email, cookieless web analytics, embedded customer support and
+    subscription payments. The base URL is issued per application in the Result dashboard
+    as NEXT_PUBLIC_BACKEND_URL; Result publishes no fixed public API host and directs
+    developers to the SDK rather than hand-rolled HTTP.
+  humanURL: https://docs.result.dev/
+  baseURL: '{NEXT_PUBLIC_BACKEND_URL}'
+  x-base-url-note: >-
+    Templated. Each Result app is provisioned its own backend base URL, shown on the app's
+    page in the Result dashboard and read from NEXT_PUBLIC_BACKEND_URL. The docs never
+    name a shared production host, so no fixed baseURL is recorded rather than guessing
+    one from the domain.
+  tags:
+  - Backend as a Service
+  - Database
+  - Authentication
+  - Storage
+  - Serverless
+  - Realtime
+  properties:
+  - type: Documentation
+    url: https://docs.result.dev/
+  - type: GettingStarted
+    url: https://docs.result.dev/
+  - type: Authentication
+    url: authentication/result-authentication.yml
+- name: Result Support Widget
+  description: >-
+    Embeddable customer-support launcher, loaded either as a plain script tag from
+    https://result.dev/widget.js with a data-support handle or via @resultdev/sdk
+    support.mount(). It opens the business's own public support page in an iframe panel;
+    conversations land in the business's Result support inbox. Rate limited by the support
+    API to 5 new conversations per IP per hour and 30 messages per IP per 10 minutes.
+  humanURL: https://docs.result.dev/sdk/support
+  baseURL: https://support.{handle}.withresult.com
+  x-base-url-note: >-
+    Templated per business handle, taken verbatim from the provider's own widget.js
+    (`https://support.${label}.withresult.com`). withresult.com is a Result-controlled
+    wildcard domain on the same Cloudflare nameservers as result.dev.
+  tags:
+  - Customer Support
+  - Embedded Components
+  properties:
+  - type: Documentation
+    url: https://docs.result.dev/sdk/support
+  - type: Components
+    url: components/result-components.yml
 common:
-- type: DomainSecurity
-  url: security/result-domain-security.yml
 - type: Website
   url: https://result.dev/
+- type: DeveloperPortal
+  url: https://docs.result.dev/
+- type: Documentation
+  url: https://docs.result.dev/
+- type: APIReference
+  url: https://docs.result.dev/cli/reference
+- type: GettingStarted
+  url: https://docs.result.dev/
+- type: Pricing
+  url: https://result.dev/pricing
 - type: SignUp
-  url: https://result.dev/
+  url: https://result.dev/login
+- type: TermsOfService
+  url: https://result.dev/terms
+- type: PrivacyPolicy
+  url: https://result.dev/privacy
+- type: RefundPolicy
+  url: https://result.dev/refund
+- type: LLMsTxt
+  url: llms/result-llms.txt
+- type: MCPServer
+  url: mcp/result-mcp.yml
+- type: Packages
+  url: packages/result-packages.yml
+- type: SDKs
+  url: packages/result-packages.yml
+- type: CLI
+  url: cli/result-cli.yml
+- type: Components
+  url: components/result-components.yml
+- type: Authentication
+  url: authentication/result-authentication.yml
+- type: OAuthScopes
+  url: scopes/result-scopes.yml
+- type: Conventions
+  url: conventions/result-conventions.yml
+- type: ErrorCatalog
+  url: errors/result-error-codes.yml
+- type: DataModel
+  url: data-model/result-data-model.yml
+- type: Sandbox
+  url: sandbox/result-sandbox.yml
+- type: Plans
+  url: plans/result-plans-pricing.yml
+- type: RateLimits
+  url: rate-limits/result-rate-limits.yml
+- type: Lifecycle
+  url: lifecycle/result-lifecycle.yml
+- type: Conformance
+  url: conformance/result-conformance.yml
+- type: WellKnown
+  url: well-known/result-well-known.yml
+- type: DomainSecurity
+  url: security/result-domain-security.yml
 maintainers:
 - FN: Kin Lane
   email: kin@apievangelist.com
 - FN: APIs.json
   email: info@apis.io
 x-enrichment:
-  date: '2026-07-20'
-  status: minimal
-  artifacts_added: 1
+  date: '2026-08-13'
+  status: enriched
+  artifacts_added: 18
   pass: local-v1
