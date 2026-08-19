@@ -1,0 +1,79 @@
+generated: '2026-08-13'
+method: searched
+source: https://result.dev/pricing
+docs: https://result.dev/pricing
+currency: USD
+plan_count: 3
+billing_periods: [month, week]
+note: >-
+  Prices below are the monthly figures the page renders by default; the page also carries a
+  Monthly/Weekly toggle, and the weekly amounts are rendered client-side and were not
+  captured. Result's positioning is that no feature is locked behind a tier — "Every Result
+  feature" appears in all three. Tiers differ only by capacity (credits, businesses, app
+  users, Company Brain storage) and by the transaction fee taken on payments processed
+  through the platform. There is no free tier, no trial, and no enterprise/contact-us tier.
+plans:
+- name: Launch
+  price: 49
+  currency: USD
+  period: month
+  positioning: For getting your first businesses live.
+  cancellation: Cancel any time
+  included:
+    features: Every Result feature
+    credits_per_month: 25000
+    businesses_max: 3
+    app_users_max: 10000
+    company_brain_storage_gb: 10
+  transaction_fee: 10% + $0.50
+- name: Grow
+  price: 99
+  currency: USD
+  period: month
+  positioning: More room for growing products and audiences.
+  cancellation: Cancel any time
+  included:
+    features: Every Result feature
+    credits_per_month: 50000
+    businesses_max: 5
+    app_users_max: 100000
+    company_brain_storage_gb: 50
+  transaction_fee: 8% + $0.50
+- name: Scale
+  price: 249
+  currency: USD
+  period: month
+  positioning: Higher capacity for an established portfolio.
+  cancellation: Cancel any time
+  included:
+    features: Every Result feature
+    credits_per_month: 125000
+    businesses_max: 10
+    app_users_max: 1000000
+    company_brain_storage_gb: 250
+  transaction_fee: 5% + $0.50
+included_in_every_plan:
+- Build, deploy, auth, database, storage, functions & realtime
+- Eve, Company Brain, tasks, blog & automations
+- Content, publishing, social, SEO, GEO, sales & CRM
+- Support, payments & analytics
+overage:
+  model: prepaid credit top-up
+  rate: 500 credits per $1
+  purchase_range_usd: [5, 100]
+  expiry:
+    plan_credits: reset each billing period
+    purchased_credits: never expire
+refunds:
+  policy_url: https://result.dev/refund
+  summary: >-
+    All sales are final. Subscription fees are billed in advance per billing period and are
+    non-refundable, including for partial periods, unused features or mid-period
+    cancellation. Cancelling stops future billing at the end of the current period.
+  last_updated: '2026-07-21'
+legal_entity: Foundative Inc.
+x-evidence:
+- url: https://result.dev/pricing
+  status: 200
+- url: https://result.dev/refund
+  status: 200

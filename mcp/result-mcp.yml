@@ -1,0 +1,84 @@
+generated: '2026-08-13'
+method: searched
+status: published
+source: https://result.dev/mcp
+deployment:
+  mode: remote
+  endpoint: https://api.result.dev/mcp
+  auth: oauth
+  verified: probed
+server:
+  name: result
+  transport: http
+  url: https://api.result.dev/mcp
+  protocol: Model Context Protocol, streamable HTTP transport
+  install_command: claude mcp add --transport http --scope user result https://api.result.dev/mcp
+  login_command: claude mcp login result
+  documented_clients:
+  - Claude Code
+  - Cursor
+  - Codex
+  - Claude Desktop
+  - any MCP client (provider links https://modelcontextprotocol.io/clients)
+authorization:
+  flow: OAuth 2.1 authorization code with PKCE
+  protected_resource_metadata: https://api.result.dev/.well-known/oauth-protected-resource
+  authorization_server: https://api.descope.com/v1/apps/P3HVe6On8gLt3t2puHvHToMFQit2
+  authorization_endpoint: https://api.descope.com/oauth2/v1/apps/authorize
+  token_endpoint: https://api.descope.com/oauth2/v1/apps/token
+  registration_endpoint: https://api.descope.com/v1/mgmt/inboundapp/app/P3HVe6On8gLt3t2puHvHToMFQit2/register
+  dynamic_client_registration: true
+  code_challenge_methods: [S256]
+  dpop_supported: true
+  scopes_supported: [full-access]
+  identity_provider: Descope
+tools:
+  count: 74
+  count_source: https://result.dev/mcp
+  schemas_available: false
+  schemas_note: >-
+    NOT FABRICATED — no tool names are recorded here. An anonymous
+    {"jsonrpc":"2.0","id":1,"method":"tools/list"} POST to https://api.result.dev/mcp
+    returns HTTP 401 {"error":"invalid_token","error_description":"No authorization
+    provided"} with a www-authenticate Bearer challenge, so the live tool list and every
+    inputSchema require an authenticated Result account. The provider's public /mcp page
+    states the count (74) and the six categories below but does not name individual tools,
+    and Result publishes no OpenAPI, so there is nothing to derive names from. The
+    categories are quoted verbatim from that page.
+  categories:
+  - name: Plan & operate
+    description: Create, update, and organize tasks and automations.
+  - name: Build & ship
+    description: Inspect your app, start builds, publish, and view infrastructure.
+  - name: Use Company Brain
+    description: Search, read, save, file, and remove business knowledge.
+  - name: Grow your audience
+    description: Write blogs, create social content, and run SEO and GEO checks.
+  - name: Sell & support
+    description: Work with leads, pipeline, products, payments, and support threads.
+  - name: Run the company
+    description: Check credits, business health, analytics, and incorporation.
+governance:
+  access: read and write
+  ownership_check: >-
+    "every call still checks that the business is yours" — the provider states the MCP tools
+    are the same tools the product uses internally, under the same validation, permission
+    and business-ownership rules.
+  human_in_the_loop: >-
+    "Sensitive actions like publishing, filing and outreach ask for approval in your own
+    client first."
+x-evidence:
+- fetched: '2026-08-13'
+  url: https://result.dev/mcp
+  http_status: 200
+  note: public MCP landing page; source of the endpoint, install command, tool count and categories
+- fetched: '2026-08-13'
+  url: https://api.result.dev/mcp
+  method: POST tools/list
+  http_status: 401
+  body: '{"error":"invalid_token","error_description":"No authorization provided"}'
+  www_authenticate: 'Bearer error="invalid_token", error_description="No authorization provided", resource_metadata="https://api.result.dev/.well-known/oauth-protected-resource"'
+- fetched: '2026-08-13'
+  url: https://api.result.dev/.well-known/oauth-protected-resource
+  http_status: 200
+  content_type: application/json

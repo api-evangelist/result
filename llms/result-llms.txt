@@ -1,0 +1,21 @@
+# Result Backend
+
+> Postgres, auth, storage, functions, realtime, AI, email, web analytics and customer support - one backend, one SDK, one CLI.
+
+## Docs
+
+- [Quickstart](https://docs.result.dev/index.md): From zero to a working backend call in four steps.
+- [Database](https://docs.result.dev/sdk/database.md): PostgREST-style queries against your Postgres tables.
+- [Authentication](https://docs.result.dev/sdk/authentication.md): Google sign-in and email/password, with sessions the SDK manages for you.
+- [Storage](https://docs.result.dev/sdk/storage.md): File uploads, downloads and signed URLs.
+- [Realtime](https://docs.result.dev/sdk/realtime.md): Channels, events and presence over WebSocket.
+- [Functions](https://docs.result.dev/sdk/functions.md): Serverless Deno functions: invoke from the app, deploy from the terminal.
+- [AI models](https://docs.result.dev/sdk/ai.md): Chat, streaming, embeddings and image generation - no API key to manage.
+- [Email](https://docs.result.dev/sdk/email.md): Transactional email with managed delivery - no SMTP setup.
+- [Payments](https://docs.result.dev/sdk/payments.md): Sell subscriptions and one-off products. Tax, fraud, refunds and payouts handled.
+- [Web analytics](https://docs.result.dev/sdk/analytics.md): Pageviews, sessions and custom events - no script tag, no cookies.
+- [Customer support](https://docs.result.dev/sdk/support.md): A support launcher on your pages. Conversations land in your Result inbox.
+- [CLI overview](https://docs.result.dev/cli/overview.md): npx @resultdev/cli - setup and admin operations for your backend.
+- [CLI reference](https://docs.result.dev/cli/reference.md): Every command, with the flags that matter.
+- [Keys & security](https://docs.result.dev/guides/security.md): Which key goes where, and what actually protects your data.
+- [Troubleshooting](https://docs.result.dev/guides/troubleshooting.md): The errors you'll actually hit, with the fix for each.

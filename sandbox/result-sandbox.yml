@@ -1,0 +1,68 @@
+generated: '2026-08-13'
+method: searched
+source: https://docs.result.dev/sdk/payments
+docs: https://docs.result.dev/sdk/payments
+note: >-
+  Result's sandbox is scoped to payments. New accounts start in test mode and the switch to
+  live is a dashboard toggle under Finance > Payments — the running application follows it,
+  so there is no environment variable to change and no redeploy. Every test value below is
+  quoted verbatim from the provider's documentation; none is invented. There is no separate
+  sandbox base URL, no test-mode key prefix, and no test clock or time-simulation tooling
+  documented for any other surface (database, storage, functions, realtime, AI, email,
+  analytics, support all run against the live backend).
+modes:
+- name: test
+  default_for: new accounts
+  description: >-
+    Payments run against test cards only. The docs are explicit: "Use test cards, never a
+    real one."
+- name: live
+  activation: a switch in the dashboard under Finance > Payments
+  description: >-
+    The running app follows the switch — no environment variable to change, no redeploy.
+key_separation:
+  test_vs_live_keys: false
+  note: >-
+    Result does NOT separate test and live by key prefix. The same publishable key and admin
+    key are used in both modes; the mode is account state, not a credential. This differs
+    from the prefix-based model most payment platforms use, and it means a key alone does not
+    tell an integrator which mode they are in. `result payments status` from the CLI is the
+    documented way to ask.
+test_cards:
+- number: '4242 4242 4242 4242'
+  outcome: Succeeds
+- number: '4000 0038 0000 0446'
+  outcome: Succeeds, with a 3DS challenge
+- number: '4000 0000 0000 0002'
+  outcome: Declined
+- number: '4000 0027 6000 3184'
+  outcome: Succeeds once, then fails on renewal
+test_card_rules:
+- Any future expiry works.
+- Any name works.
+processor:
+  merchant_of_record: Paddle.com
+  note: >-
+    The test card numbers are the standard Paddle/Stripe-family test PANs. Result requires
+    that a seller's public terms state Paddle.com is the reseller and Merchant of Record for
+    all orders before the account can go live.
+cli_inspection:
+- command: result payments status
+  description: Is this app set up to take money.
+- command: result payments plans
+  description: The plan ids to use in checkout().
+go_live_requirements:
+  note: >-
+    Three pages must be publicly reachable WITHOUT a login before an account can sell. The
+    docs name login walls and hidden pricing as the most common reason a site is refused.
+  pages:
+  - Terms and conditions stating that Paddle.com is the reseller and Merchant of Record for
+    all orders.
+  - A refund policy with a window between 14 and 90 days.
+  - A privacy notice.
+not_documented:
+- test clocks / time simulation
+- fixture or trigger tooling for simulating events
+- test bank accounts or IBANs
+- dispute simulation values
+- a sandbox base URL or separate test backend

@@ -1,0 +1,199 @@
+generated: '2026-08-13'
+method: searched
+source: >-
+  https://docs.result.dev/sdk/database, https://docs.result.dev/sdk/payments,
+  https://docs.result.dev/sdk/authentication, https://docs.result.dev/cli/reference
+docs: https://docs.result.dev/sdk/database
+note: >-
+  Result publishes no OpenAPI and no schema document, so this is not derived from $ref links.
+  It is searched from the documentation, and it is unusual in shape: most of a Result
+  application's data model is defined by the CUSTOMER, not by Result. Result contributes a
+  fixed column contract every table inherits, an identity/ownership convention that RLS
+  enforces, and three managed billing tables it writes into the customer's own database.
+  Only entities the docs name explicitly are recorded here; no columns are inferred.
+platform_contract:
+  every_table:
+    columns:
+    - name: id
+      type: uuid
+      managed: true
+    - name: created_at
+      type: timestamp
+      managed: true
+    - name: updated_at
+      type: timestamp
+      managed: true
+    rule: >-
+      Added automatically by `result db create-table`. Never declare them yourself — the CLI
+      rejects them in a column spec.
+  ownership_column:
+    name: user_id
+    type: uuid
+    effect: >-
+      A table created with a user_id uuid column gets a generated owner policy: rows scope to
+      the signed-in user and user_id defaults from the session on insert. This single column
+      is what turns a table into a per-user entity.
+  column_types: [string, integer, float, boolean, datetime, date, json, uuid]
+  column_spec: 'name:type[:required][:unique]'
+  rls:
+    default: enabled
+    zero_policy_behaviour: >-
+      Denies everything. Writes 403 with Postgres code 42501; reads return an empty array with
+      no error.
+entities:
+- name: user
+  managed_by: result
+  description: >-
+    The application's end user, created through auth.signUp or an OAuth sign-in. Referenced
+    from customer tables by user_id and from Postgres policies as auth.uid().
+  documented_fields:
+  - name: id
+    type: uuid
+    note: the value auth.uid() returns and that user_id columns hold
+  - name: email
+  - name: name
+  - name: avatar_url
+  operations: [signUp, signInWithPassword, signInWithOAuth, signOut, getCurrentUser, getProfile, setProfile]
+  admin_view: result auth users
+- name: billing_customers
+  managed_by: result
+  description: >-
+    Managed billing table created in the customer's own backend. Result writes it from
+    verified payment events. Read-only to signed-in users and scoped to their own rows.
+  rules:
+  - The table already exists — do not create it.
+  - Do not write to it.
+  - Do not build a payment webhook endpoint.
+- name: billing_subscriptions
+  managed_by: result
+  description: Managed subscription state, written by Result from verified payment events.
+  documented_fields:
+  - name: user_id
+    type: uuid
+  - name: status
+    values: [active, trialing, past_due, canceled]
+    note: >-
+      hasAccess() grants access for active, trialing AND past_due — past_due means automatic
+      recovery is under way and usually succeeds.
+  - name: plan
+  - name: current_period_ends_at
+  example_query: |
+    select status, plan, current_period_ends_at
+      from billing_subscriptions
+     where user_id = auth.uid();
+- name: billing_plans
+  managed_by: result
+  description: >-
+    Managed plan catalog. Read-only to signed-in users. Plans are authored in the dashboard
+    under Finance > Products and surfaced to the app through payments.plans().
+  documented_fields:
+  - name: slug
+    note: the plan id passed to checkout()
+  - name: name
+  - name: productName
+  - name: amount
+    type: string
+    note: lowest denomination of the currency, NOT always hundredths
+  - name: currencyCode
+  - name: interval
+    values: [month]
+    note: the docs' example shows month; other intervals exist in the product (yearly plans
+      are referenced by changePlan) but are not enumerated
+  - name: formattedTotal
+    note: display-ready, localized to the visitor's country and currency with tax applied
+- name: bucket
+  managed_by: result
+  description: >-
+    A storage container, created with `result storage create-bucket`. Public buckets give
+    files stable URLs; private buckets are reached through expiring signed URLs.
+  documented_fields:
+  - name: key
+    note: returned by upload/uploadAuto; save it alongside url
+  - name: url
+    note: directly usable for public buckets
+  access: uploads and list() require a signed-in user; anonymous calls are rejected
+- name: channel
+  managed_by: result
+  description: >-
+    A realtime channel. Patterns are declared with `result realtime add-channel`; % is a
+    wildcard. A client cannot subscribe until a declared pattern covers the channel name.
+  documented_fields:
+  - name: pattern
+  - name: description
+  presence: [members, 'presence:join', 'presence:leave']
+- name: function
+  managed_by: result
+  description: >-
+    A serverless Deno function, deployed with `result functions deploy`. Runs at
+    $NEXT_PUBLIC_BACKEND_URL/functions/<name>.
+- name: secret
+  managed_by: result
+  description: >-
+    A key/value pair readable inside functions with Deno.env.get(). Values are never shown by
+    the CLI and deletion is documented as unreliable, so secrets are effectively append-only.
+- name: migration
+  managed_by: result
+  description: >-
+    A versioned SQL migration. Names allow lowercase letters, numbers and hyphens only, and
+    the SQL must not contain BEGIN/COMMIT because it already runs in one transaction.
+- name: deployment
+  managed_by: result
+  description: >-
+    A frontend build on Result hosting, with history, status and build environment variables.
+  documented_fields:
+  - name: id
+  - name: status
+- name: analytics_event
+  managed_by: result
+  description: >-
+    A pageview, pageleave, session or custom event. No cookies and no fingerprinting — a random
+    visitor id in localStorage and a session id that rotates after 30 idle minutes.
+  documented_fields:
+  - name: siteId
+    note: the workspace id from Analytics > Web
+  - name: name
+    note: capped at 64 characters
+  - name: props
+  - name: identity
+    note: attached with analytics.identify(userId)
+- name: support_conversation
+  managed_by: result
+  description: >-
+    A visitor conversation started through the support launcher. There are no visitor
+    accounts — a conversation is remembered in the support page's own storage. Conversations
+    land in the business's Result support inbox.
+  rate_limits: 5 new conversations per IP per hour; 30 messages per IP per 10 minutes
+relationships:
+- from: billing_subscriptions
+  to: user
+  type: belongs_to
+  via: user_id
+  evidence: 'where user_id = auth.uid() in the documented example query'
+- from: billing_customers
+  to: user
+  type: belongs_to
+  via: user_id
+  evidence: documented as scoped to the signed-in user's own rows
+- from: billing_subscriptions
+  to: billing_plans
+  type: belongs_to
+  via: plan
+  evidence: subscription carries a plan; plan ids come from payments.plans()
+- from: '<customer table>'
+  to: user
+  type: belongs_to
+  via: user_id
+  evidence: >-
+    The generated owner policy. This is the one relationship Result imposes on customer-defined
+    entities, and it is created by the presence of a user_id uuid column.
+- from: channel
+  to: channel_pattern
+  type: belongs_to
+  via: wildcard match
+  evidence: 'chat:% covers chat:room-1, chat:room-2'
+extensions:
+  pgvector:
+    available: true
+    how: enabled through a `result db migrate` SQL migration
+    pairs_with: backend.ai.embeddings.create
+render: null

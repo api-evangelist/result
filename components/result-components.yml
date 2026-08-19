@@ -1,0 +1,119 @@
+generated: '2026-08-13'
+method: searched
+source: >-
+  https://docs.result.dev/sdk/support, https://docs.result.dev/sdk/payments,
+  https://docs.result.dev/sdk/analytics, and https://result.dev/widget.js fetched verbatim
+docs: https://docs.result.dev/sdk/support
+note: >-
+  Client-side surfaces Result ships that render UI or run in the browser, as distinct from the
+  server-side SDK catalogued in packages/. Each is loaded either through @resultdev/sdk or as
+  a plain script tag; there is no separate component npm package.
+families:
+- family: Customer support launcher
+  description: >-
+    A floating launcher button in the bottom-right corner that opens the business's own public
+    support page in an iframe panel — full-screen below 640px. Nothing about the support UI
+    ships in the host application's bundle, so there is nothing to restyle or keep in step.
+  loaders:
+  - method: script-tag
+    url: https://result.dev/widget.js
+    snippet: '<script src="https://result.dev/widget.js" data-support="acme" async></script>'
+    attributes:
+    - name: data-support
+      description: the business @handle on Result, without the @
+    - name: async
+    verified: fetched 2026-08-13, HTTP 200, 16,710 bytes
+    implementation_notes: >-
+      Self-contained vanilla JavaScript with no dependencies and inline styles only, so host
+      page CSS cannot break it and it cannot break the host page. Stated verbatim in the file's
+      own header comment.
+  - method: sdk
+    package: '@resultdev/sdk'
+    config: 'support: { handle: "acme" }'
+    operations:
+    - name: support.mount()
+      description: >-
+        Puts the launcher up. Safe to call more than once and a no-op during SSR, so an effect
+        that runs twice still leaves exactly one launcher.
+    - name: support.unmount()
+      description: Takes the launcher back off. Unmounting never loses a conversation.
+    note: >-
+      The SDK loads the same widget.js file and calls mount() itself — one implementation, two
+      ways in.
+  panel_target: https://support.{handle}.withresult.com
+  rules:
+  - Use the script tag or the SDK, not both — a page that does both gets two launchers.
+  - >-
+      If the widget script cannot be fetched (a CSP rule, an ad blocker, an offline visitor),
+      mount() warns on the console and the page carries on without a launcher.
+  limits: 5 new conversations per IP per hour; 30 messages per IP per 10 minutes
+- family: Payment checkout
+  description: >-
+    A hosted checkout surface opened from the app. The signed-in user's id is attached
+    automatically, which is how the purchase is matched back to their account.
+  loaders:
+  - method: sdk
+    package: '@resultdev/sdk'
+    config: 'payments: {}'
+    operations:
+    - name: payments.checkout({ plan })
+      description: Opens the payment overlay.
+  display_modes:
+  - mode: overlay
+    default: true
+  - mode: inline
+    requires: 'frameTarget — a CSS selector'
+  options: [plan, quantity, successUrl, email, displayMode, frameTarget, customData]
+  related_surfaces:
+  - name: billing portal
+    operation: payments.portalUrl()
+    description: >-
+      Handles payment methods, invoices and cancellation. Links are single-use and short-lived
+      — mint one per click, open it in a new tab, never cache or iframe it.
+  gating_operations: [payments.hasAccess, payments.subscription, payments.changePlan, payments.cancel]
+- family: Web analytics client
+  description: >-
+    A browser tracker that runs when the SDK client is created in a browser. No script tag, no
+    cookies, no fingerprinting — a random visitor id in localStorage and a session id that
+    rotates after 30 idle minutes.
+  loaders:
+  - method: sdk
+    package: '@resultdev/sdk'
+    config: 'analytics: { siteId: "SITE_ID" }'
+  - method: script-tag
+    file: wa.js
+    note: >-
+      Referenced by the docs as an alternative. If both are on the page, whichever loads first
+      wins and nothing double-counts.
+  auto_tracked:
+  - pageviews, including SPA route changes via pushState/replaceState/popstate/hashchange
+  - back-forward cache restores
+  - pageleaves
+  - sessions
+  declarative_api:
+    description: Click events without any JavaScript.
+    snippet: '<button data-wa-event="Signup" data-wa-event-plan="pro">Sign up</button>'
+    attributes:
+    - name: data-wa-event
+      description: event name
+    - name: data-wa-event-<prop>
+      description: event property
+  programmatic_api: [analytics.track, analytics.identify]
+  options:
+  - name: siteId
+    default: required
+  - name: autoTrack
+    default: true
+  - name: domains
+    default: all
+  - name: excludeSearch
+    default: false
+  - name: excludeHash
+    default: false
+  - name: endpoint
+    default: managed
+    note: self-hosting only
+  privacy:
+  - Visitors can opt out on their own machine with localStorage.rwa_disable = "1".
+  - Automation (navigator.webdriver) is never tracked.
+  - Tracking is a no-op during SSR and in server code.

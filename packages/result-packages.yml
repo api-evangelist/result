@@ -1,0 +1,75 @@
+generated: '2026-08-13'
+method: searched
+source: https://registry.npmjs.org/ metadata + https://docs.result.dev/
+note: >-
+  Both packages are first-party (the @resultdev npm scope, published UNLICENSED with
+  homepage https://docs.result.dev) and are the only distribution channels Result documents
+  — the docs explicitly tell developers not to hand-roll HTTP against the backend. Neither
+  package declares a public source repository, and no Result GitHub organization was found
+  (github.com/resultdev and github.com/result-dev both 404), so these registry entries are
+  the whole published SDK surface. Result publishes no client library for any language
+  other than JavaScript/TypeScript; PyPI, RubyGems, crates.io, NuGet, Maven Central,
+  Packagist and pkg.go.dev were checked and hold nothing first-party.
+packages:
+- language: javascript
+  registry: npm
+  name: '@resultdev/sdk'
+  url: https://www.npmjs.com/package/@resultdev/sdk
+  install: npm install @resultdev/sdk
+  official: true
+  version: 0.11.2
+  published: '2026-08-08'
+  first_published: '2026-07-14'
+  release_count: 15
+  license: UNLICENSED
+  homepage: https://docs.result.dev
+  repository: null
+  description: >-
+    Result Backend SDK — authentication, database, storage, functions, realtime, AI, email,
+    web analytics and customer support for apps built on Result.
+  subpath_exports:
+  - name: '@resultdev/sdk/ssr'
+    description: >-
+      Server-side variant that keeps the refresh token in an httpOnly cookie the app's own
+      server writes, out of reach of browser JavaScript.
+- language: javascript
+  registry: npm
+  name: '@resultdev/cli'
+  url: https://www.npmjs.com/package/@resultdev/cli
+  install: npx @resultdev/cli init
+  official: true
+  version: 0.4.2
+  published: '2026-08-08'
+  first_published: '2026-07-21'
+  release_count: 10
+  license: UNLICENSED
+  homepage: null
+  repository: null
+  binary: result
+  description: >-
+    Result Backend CLI — one-time setup and admin operations: tables, migrations, buckets,
+    realtime channels, functions, secrets, payment keys and frontend deployments.
+  command_surface: cli/result-cli.yml
+registries_checked_empty:
+- registry: pypi
+  result: no first-party package
+- registry: rubygems
+  result: no first-party package
+- registry: crates.io
+  result: no first-party package
+- registry: nuget
+  result: no first-party package
+- registry: maven-central
+  result: no first-party package
+- registry: packagist
+  result: no first-party package
+- registry: pkg.go.dev
+  result: no first-party package
+currency:
+  note: >-
+    Both packages were last published on the same day (2026-08-08) and both are pre-1.0 and
+    moving fast — 15 SDK releases in the eight weeks since first publication. The docs pin
+    behaviour to specific versions (session persistence requires 0.7.0+, browser function
+    invocation and realtime channel filtering require 0.3.0+), so an SDK older than the API
+    it wraps is a documented failure mode here rather than a theoretical one.
+  checked: '2026-08-13'

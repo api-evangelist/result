@@ -1,0 +1,145 @@
+generated: '2026-08-13'
+method: searched
+source: >-
+  https://docs.result.dev/sdk/authentication, https://docs.result.dev/guides/security,
+  https://docs.result.dev/guides/troubleshooting, and the anonymous RFC 9728/RFC 8414
+  metadata at https://api.result.dev/.well-known/oauth-protected-resource
+docs:
+- https://docs.result.dev/sdk/authentication
+- https://docs.result.dev/guides/security
+note: >-
+  Result publishes no OpenAPI, so this profile is searched from the provider's own
+  documentation and from live OAuth discovery metadata rather than derived from
+  securitySchemes. There are two distinct authentication planes: credentials that
+  authenticate an APPLICATION to its own Result Backend, and an OAuth 2.1 flow that
+  authenticates a HUMAN OPERATOR (and their agent) to the Result MCP server.
+summary:
+  types: [apiKey, http, oauth2]
+  api_key_in: [header]
+  oauth2_flows: [authorizationCode]
+  planes: [backend-credentials, mcp-oauth, end-user-session]
+schemes:
+- name: publishable-anon-key
+  plane: backend-credentials
+  type: apiKey
+  in: header
+  header: Authorization
+  format: 'Bearer <publishable key>'
+  env_var: NEXT_PUBLIC_BACKEND_ANON_KEY
+  public: true
+  description: >-
+    The publishable client key. Ships in the browser bundle by design — the provider states
+    plainly that anyone can read it out of a shipped frontend. It is what @resultdev/sdk
+    uses for every application call.
+  what_protects_data:
+  - Row-level security. Tables created with a user_id uuid column get an owner policy
+    scoping rows to the signed-in user; RLS is on by default.
+  - Signed-in-only writes. Storage uploads and list() reject anonymous callers.
+  - Serverless functions as the trust boundary. AI calls and email sends work with the
+    publishable key alone, so anyone holding it can drive spend; the docs direct expensive
+    or sensitive operations into a function.
+  caveat: >-
+    The docs note in passing that an end-user HTTP call carries
+    `Authorization: Bearer <publishable key>`, not an x-api-key header — while explicitly
+    telling developers not to hand-roll HTTP at all.
+- name: backend-admin-key
+  plane: backend-credentials
+  type: apiKey
+  in: header
+  env_var: BACKEND_ADMIN_KEY
+  public: false
+  used_by: '@resultdev/cli'
+  description: >-
+    Full admin control of the backend — schema, migrations, buckets, realtime channel
+    patterns, functions, secrets, payment keys, deployments. Terminal or server-side code
+    only.
+  prohibitions:
+  - Never in client code.
+  - Never in a NEXT_PUBLIC_* variable.
+  - Never in the browser.
+  - Never as a Result-hosting build variable.
+- name: end-user-session
+  plane: end-user-session
+  type: http
+  scheme: bearer
+  description: >-
+    Issued at sign-in and attached by the SDK to every database, storage, function and
+    realtime call, which is what makes RLS-scoped tables resolve correctly.
+  providers:
+  - method: email-password
+    operations: [signUp, signInWithPassword, signOut, sendResetPasswordEmail, resetPassword]
+    note: >-
+      signUp returns a session immediately; email verification is pre-configured off, so
+      there is no "check your email" stall.
+  - method: oauth
+    provider: google
+    operation: signInWithOAuth("google")
+    note: configured on every backend, no client ID to register, no callback route to build
+  - method: oauth
+    provider: github
+    operation: signInWithOAuth("github")
+  discovery_call: getPublicAuthConfig() -> data.oAuthProviders
+  token_storage:
+    access_token: in memory
+    refresh_token: first-party cookie on the application's own origin, written by the SDK
+    localstorage: >-
+      deliberately empty — the docs state an empty localStorage never means "signed out",
+      and that sign-in state must be checked with getCurrentUser(), never by reading browser
+      storage
+    requires: SDK 0.7.0 or newer for cookie-based session persistence
+    hardened_variant: >-
+      '@resultdev/sdk/ssr' puts the refresh token in an httpOnly cookie the application's own
+      server writes, which browser JavaScript cannot read. The docs name XSS as a
+      session-theft hole in the default configuration and call the SSR variant the right
+      trade for apps holding something worth stealing.
+  session_restore:
+    call: getCurrentUser()
+    rule: >-
+      Must be called on mount. onAuthStateChange() reports changes only and never fires for
+      an already-existing session, so it cannot stand in for the restore call.
+  flow_control:
+    modes: [redirect, popup, auto]
+    default: auto
+    note: >-
+      Google refuses to render inside an iframe, so the SDK detects a framed app and opens a
+      popup instead. redirectTo must share an origin with the page starting the sign-in;
+      a cross-origin value is refused up front with OAUTH_REDIRECT_CROSS_ORIGIN.
+  profiles:
+    operations: [getProfile, setProfile]
+    fields: [name, avatar_url]
+- name: mcp-oauth
+  plane: mcp-oauth
+  type: oauth2
+  flows:
+  - flow: authorizationCode
+    authorizationUrl: https://api.descope.com/oauth2/v1/apps/authorize
+    tokenUrl: https://api.descope.com/oauth2/v1/apps/token
+    refreshUrl: https://api.descope.com/oauth2/v1/apps/token
+    revocationUrl: https://api.descope.com/oauth2/v1/apps/revoke
+    userinfoUrl: https://api.descope.com/oauth2/v1/apps/userinfo
+    scopes:
+      full-access: Read and write access to the businesses the authenticated account owns.
+  issuer: https://api.descope.com/v1/apps/P3HVe6On8gLt3t2puHvHToMFQit2
+  jwks_uri: https://api.descope.com/P3HVe6On8gLt3t2puHvHToMFQit2/.well-known/jwks.json
+  protected_resource: https://api.result.dev/mcp
+  protected_resource_metadata: https://api.result.dev/.well-known/oauth-protected-resource
+  dynamic_client_registration: https://api.descope.com/v1/mgmt/inboundapp/app/P3HVe6On8gLt3t2puHvHToMFQit2/register
+  pkce: [S256]
+  dpop_supported: true
+  token_endpoint_auth_methods: [none, client_secret_basic, client_secret_post]
+  id_token_signing_alg: [RS256]
+  identity_provider: Descope
+  sources: [well-known/result-oauth-protected-resource.json, well-known/result-oauth-authorization-server.json]
+account_identity:
+  note: >-
+    The Terms of Service state a Google account is required to sign in to Result itself
+    (distinct from the end-user auth an application built on Result offers its own users).
+x-evidence:
+- url: https://docs.result.dev/sdk/authentication
+  status: 200
+- url: https://docs.result.dev/guides/security
+  status: 200
+- url: https://api.result.dev/.well-known/oauth-protected-resource
+  status: 200
+- url: https://api.descope.com/v1/apps/P3HVe6On8gLt3t2puHvHToMFQit2/.well-known/oauth-authorization-server
+  status: 200

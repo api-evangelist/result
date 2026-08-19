@@ -1,0 +1,57 @@
+generated: '2026-08-13'
+method: probed
+source: https://api.result.dev/.well-known/oauth-protected-resource
+docs: https://result.dev/mcp
+note: >-
+  Result declares exactly one OAuth scope. Both the RFC 9728 protected-resource metadata for
+  the MCP server and the RFC 8414 authorization-server metadata it delegates to publish
+  scopes_supported: ["full-access"] and nothing else. There is no scope-reference or
+  permissions page in the documentation, and no finer-grained scope exists to enrich this
+  with — that coarseness IS the finding, and it is recorded rather than padded. Result's
+  own /mcp page describes the compensating controls in prose: authorization grants read and
+  write, every call re-checks that the business belongs to the authenticated account, and
+  sensitive actions (publishing, filing, outreach) are pushed to a client-side approval
+  prompt rather than being separated by scope.
+  0-working/derive-oauth-scopes.py was not the source here — it reads OpenAPI oauth2
+  securitySchemes, and Result publishes no OpenAPI.
+schemes:
+- name: result-mcp-oauth
+  source: https://api.result.dev/.well-known/oauth-protected-resource
+  resource: https://api.result.dev/mcp
+  authorization_server: https://api.descope.com/v1/apps/P3HVe6On8gLt3t2puHvHToMFQit2
+  flows:
+  - flow: authorizationCode
+    authorizationUrl: https://api.descope.com/oauth2/v1/apps/authorize
+    tokenUrl: https://api.descope.com/oauth2/v1/apps/token
+    code_challenge_methods: [S256]
+scopes:
+- scope: full-access
+  description: >-
+    Read and write access to the Result businesses owned by the authenticated account,
+    across all 74 MCP tools. The only scope Result publishes.
+  flows: [authorizationCode]
+  sources:
+  - well-known/result-oauth-protected-resource.json
+  - well-known/result-oauth-authorization-server.json
+claims_supported:
+- iss
+- aud
+- iat
+- exp
+- sub
+- name
+- email
+- email_verified
+- phone_number
+- phone_number_verified
+- picture
+- family_name
+- given_name
+assessment:
+  granularity: single-scope
+  least_privilege: false
+  note: >-
+    An agent connecting to the Result MCP server cannot be granted anything narrower than
+    full read-write access to every business on the account. There is no read-only grant, no
+    per-category scope matching the six published tool categories, and no per-business
+    scope. Delegation is all-or-nothing at the token layer.

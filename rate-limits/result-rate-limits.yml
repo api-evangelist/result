@@ -1,0 +1,59 @@
+generated: '2026-08-13'
+method: searched
+source: https://docs.result.dev/sdk/support
+docs: https://docs.result.dev/sdk/support
+limit_count: 2
+note: >-
+  Result publishes rate limits for exactly one surface — the customer-support API behind the
+  embeddable widget — and states them as prose in the widget documentation. No limits are
+  documented for the database, storage, functions, realtime, AI, email or analytics surfaces,
+  and none for the MCP server. Consumption on those surfaces is metered commercially instead,
+  through the per-plan monthly credit allowance (see plans/result-plans-pricing.yml), which
+  is a spend ceiling rather than a request-rate ceiling.
+  CRITICAL GAP FOR AGENTS: Result documents NO rate-limit response headers of any kind — no
+  X-RateLimit-*, no RateLimit-* (RFC 9331), no Retry-After — and never states the status code
+  returned on exhaustion. A client that hits the support limit has no published runtime signal
+  telling it how long to back off; it can only infer from the failure. That absence was
+  verified by reading all fifteen documentation pages, not assumed.
+limits:
+- scope: per-ip
+  surface: customer support API
+  resource: new conversations
+  limit: 5
+  window: 1 hour
+  enforced_by: >-
+    the support API, not the widget — the docs state this explicitly, so the limit applies to
+    the plain script-tag embed and the SDK support.mount() path alike
+- scope: per-ip
+  surface: customer support API
+  resource: messages
+  limit: 30
+  window: 10 minutes
+  enforced_by: the support API, not the widget
+response_signaling:
+  headers: []
+  retry_after: false
+  status_on_exhaustion: undocumented
+  note: >-
+    Not observed either. The support API endpoint is per-business
+    (support.<handle>.withresult.com) and was not exercised, because probing a live tenant's
+    support intake to observe a 429 would generate real conversations in a third party's
+    inbox.
+commercial_metering:
+  model: monthly credits per plan, plus purchasable top-up credits
+  detail: plans/result-plans-pricing.yml
+  note: >-
+    AI calls and email sends work with the publishable key, which the docs warn means anyone
+    holding it "can drive spend". The documented mitigation is architectural, not a rate
+    limit: move expensive or sensitive operations into a serverless function so the trigger
+    is controlled server-side.
+other_documented_caps:
+- surface: email
+  cap: maximum 50 recipients per send
+  source: https://docs.result.dev/sdk/email
+- surface: analytics
+  cap: custom event name capped at 64 characters
+  source: https://docs.result.dev/sdk/analytics
+- surface: deployments
+  cap: '`result deployments deploy` polls up to 5 minutes'
+  source: https://docs.result.dev/cli/reference

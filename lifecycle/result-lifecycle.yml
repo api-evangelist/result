@@ -1,0 +1,93 @@
+generated: '2026-08-13'
+method: searched
+source: >-
+  https://docs.result.dev/ (all pages), https://registry.npmjs.org/@resultdev/sdk,
+  https://registry.npmjs.org/@resultdev/cli, plus live probes of result.dev
+note: >-
+  Result is an early-stage product (Y Combinator Spring 2026; first SDK publish 2026-07-14)
+  and its lifecycle posture reflects that. There is no API version, no deprecation policy, no
+  Sunset/Deprecation header support, no SLA and no status page. Versioning exists only in the
+  npm packages, and the documentation pins behaviour to specific SDK versions, which makes
+  the installed client version the operative contract version. All four absences below were
+  probed or read, not assumed.
+versioning:
+  scheme: package-semver
+  api_version: null
+  current_sdk: 0.11.2
+  current_cli: 0.4.2
+  docs: https://docs.result.dev/
+  note: >-
+    No URI version segment, no version header, no dated release train. The backend is
+    unversioned and rolls forward; compatibility is expressed as an SDK floor.
+  version_gated_behaviour:
+  - version: '@resultdev/sdk >= 0.3.0'
+    requirement: >-
+      Required for browser function invocation (older versions routed browser calls through a
+      retired host and threw "Failed to fetch") and for realtime channel filtering (older
+      versions tagged incoming messages with a prefixed channel name so filters never
+      matched).
+  - version: '@resultdev/sdk >= 0.7.0'
+    requirement: >-
+      Required for session persistence. Before 0.7.0 the session rode a cookie that Safari,
+      incognito windows and framed previews refuse to send.
+  breaking_change_signal: >-
+    Both of the above are retired-host / changed-wire-format events described only in the
+    troubleshooting page. Result publishes no changelog, so a consumer learns that a host was
+    retired by hitting the failure and reading the troubleshooting entry.
+deprecation:
+  policy_url: null
+  sunset_header: false
+  deprecation_header: false
+  rfc8594: false
+  note: >-
+    No deprecation policy is published. The docs do describe two de facto deprecations — the
+    retired function host and the retired realtime message tagging, both resolved only by
+    upgrading the SDK — and one durable operational caveat: secret deletion is documented as
+    unreliable on current backend versions, so secrets are effectively permanent and are
+    rotated by setting a new key rather than deleting.
+  NO_POINTER_EMITTED: >-
+    No `Deprecation` pointer is wired into apis.yml, because no deprecation policy exists.
+changelog:
+  url: null
+  probed:
+  - url: https://result.dev/changelog
+    status: 404
+  note: >-
+    No dated changelog on either result.dev or docs.result.dev, and neither npm package
+    declares a source repository. The npm version history (15 SDK releases, 10 CLI releases)
+    is the only dated record of change, and it carries no release notes. No changelog/
+    artifact is written and no ChangeLog pointer is emitted.
+sla:
+  url: null
+  uptime_target: null
+  note: The Terms of Service publish no uptime commitment or service credit.
+status_page:
+  url: null
+  probed:
+  - url: https://status.result.dev/
+    status: 000
+    detail: NXDOMAIN — host does not resolve
+  - url: https://result.dev/status
+    status: 404
+  NO_POINTER_EMITTED: >-
+    No `StatusPage` pointer is wired into apis.yml. Result operates a hosted backend, a
+    deployment platform and a payment path with no public incident channel of any kind.
+support:
+  public_channel: false
+  email: support@result.dev
+  in_app: >-
+    https://result.dev/support returns 200 but renders a sign-in wall — support is
+    account-gated. No public help center or community forum was found.
+  probed:
+  - url: https://result.dev/support
+    status: 200
+    detail: HTML shell that resolves to "Sign in · Result"
+deprecated_operations: []
+maturity:
+  stage: early
+  signals:
+  - Y Combinator Spring 2026 batch
+  - first SDK npm publish 2026-07-14, first CLI publish 2026-07-21
+  - both packages pre-1.0 and published UNLICENSED
+  - Terms of Service, Privacy Policy and Refund Policy all last updated 2026-07-21
+  - no public source repository and no GitHub organization (github.com/resultdev 404)

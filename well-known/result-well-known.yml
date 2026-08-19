@@ -1,0 +1,69 @@
+generated: '2026-08-13'
+method: searched
+source: live probes of every Result host on 2026-08-13
+note: >-
+  One real document was served. https://api.result.dev/.well-known/oauth-protected-resource
+  returns RFC 9728 OAuth 2.0 Protected Resource Metadata for the Result MCP server, and the
+  same body is served at the resource-suffixed path referenced by the 401 challenge. Its
+  authorization_servers[] points at a Descope-hosted OAuth 2.1 authorization server whose
+  RFC 8414 metadata is also anonymous and has been saved alongside it. Every other
+  well-known path on every Result host returns 404. result.dev and api.result.dev are a
+  Next.js app on Vercel that answers 404 with an HTML shell, so those 404s are genuine
+  misses rather than SPA catch-alls; docs.result.dev (Mintlify) answers unknown assets with
+  a plain-text "Asset not found".
+hosts:
+- host: https://api.result.dev
+  documents:
+  - path: /.well-known/oauth-protected-resource
+    status: 200
+    content_type: application/json
+    file: result-oauth-protected-resource.json
+    spec: RFC 9728
+  - path: /.well-known/oauth-protected-resource/mcp
+    status: 200
+    content_type: application/json
+    note: identical body to the unsuffixed path; referenced by the MCP 401 www-authenticate challenge
+  - path: /.well-known/oauth-authorization-server
+    status: 404
+  - path: /.well-known/openid-configuration
+    status: 404
+  - path: /.well-known/security.txt
+    status: 404
+  - path: /.well-known/agent-card.json
+    status: 404
+  - path: /.well-known/agent.json
+    status: 404
+- host: https://result.dev
+  documents:
+  - path: /.well-known/security.txt
+    status: 404
+  - path: /.well-known/oauth-authorization-server
+    status: 404
+  - path: /.well-known/openid-configuration
+    status: 404
+  - path: /.well-known/api-catalog
+    status: 404
+  - path: /.well-known/ai-plugin.json
+    status: 404
+  - path: /.well-known/agent-card.json
+    status: 404
+  - path: /.well-known/agent.json
+    status: 404
+- host: https://docs.result.dev
+  documents:
+  - path: /.well-known/security.txt
+    status: 404
+  - path: /.well-known/agent-card.json
+    status: 404
+delegated:
+- host: https://api.descope.com/v1/apps/P3HVe6On8gLt3t2puHvHToMFQit2
+  documents:
+  - path: /.well-known/oauth-authorization-server
+    status: 200
+    content_type: application/json
+    file: result-oauth-authorization-server.json
+    spec: RFC 8414
+    note: >-
+      Not a Result-controlled host. Saved because it is the authorization server Result's
+      own protected-resource metadata delegates to, and it is the only published description
+      of how an agent obtains a token for api.result.dev/mcp.

@@ -1,0 +1,162 @@
+generated: '2026-08-13'
+method: searched
+source: >-
+  live probes of https://api.result.dev/ plus https://docs.result.dev/ and
+  https://result.dev/terms
+note: >-
+  Result publishes no OpenAPI, so nothing here is derived from a spec. Positive assertions
+  come from documents fetched live (the RFC 9728 and RFC 8414 metadata) or from the
+  provider's own documentation. Negative assertions are recorded as findings, not omissions.
+  No `Compliance` pointer is emitted in apis.yml: Result publishes no certification, no trust
+  center and no compliance program — probe-security-programs.py returned vdp=none trust=none.
+standards:
+- id: mcp
+  name: Model Context Protocol
+  conforms: true
+  evidence: >-
+    Remote MCP server at https://api.result.dev/mcp over streamable HTTP, documented with an
+    install command for Claude Code, Cursor and Codex. An anonymous JSON-RPC tools/list POST
+    returns a well-formed 401 with an RFC 9728 www-authenticate challenge, which is the
+    specified unauthenticated behaviour.
+  verified: probed 2026-08-13
+- id: rfc9728-oauth-protected-resource-metadata
+  name: OAuth 2.0 Protected Resource Metadata
+  conforms: true
+  evidence: >-
+    https://api.result.dev/.well-known/oauth-protected-resource returns 200 application/json
+    with resource, authorization_servers[] and scopes_supported. The 401 challenge references
+    it via the resource_metadata parameter, and the resource-suffixed path
+    /.well-known/oauth-protected-resource/mcp serves the same body.
+  verified: probed 2026-08-13
+  file: well-known/result-oauth-protected-resource.json
+- id: rfc8414-oauth-authorization-server-metadata
+  name: OAuth 2.0 Authorization Server Metadata
+  conforms: true
+  evidence: >-
+    The delegated authorization server (Descope) publishes full RFC 8414 metadata — issuer,
+    jwks_uri, authorization_endpoint, token_endpoint, userinfo_endpoint, revocation_endpoint,
+    registration_endpoint.
+  verified: probed 2026-08-13
+  caveat: Served by Descope, not by a Result-controlled host.
+  file: well-known/result-oauth-authorization-server.json
+- id: oauth2
+  name: OAuth 2.0 / 2.1 authorization code
+  conforms: true
+  evidence: >-
+    response_types_supported [code], authorization and token endpoints published, single
+    scope full-access.
+- id: rfc7636-pkce
+  name: Proof Key for Code Exchange
+  conforms: true
+  evidence: code_challenge_methods_supported ["S256"]
+- id: rfc7591-dynamic-client-registration
+  name: OAuth 2.0 Dynamic Client Registration
+  conforms: true
+  evidence: >-
+    registration_endpoint published, which is what lets an arbitrary MCP client register
+    itself without a pre-issued client_id.
+- id: rfc9449-dpop
+  name: OAuth 2.0 Demonstrating Proof of Possession
+  conforms: true
+  evidence: dpop_signing_alg_values_supported present in the authorization server metadata
+  caveat: Advertised by the authorization server; Result does not document requiring it.
+- id: oidc
+  name: OpenID Connect
+  conforms: partial
+  evidence: >-
+    The authorization server exposes a userinfo_endpoint, id_token_signing_alg_values_supported
+    [RS256] and OIDC claims (sub, email, email_verified, name, picture, given_name,
+    family_name). No /.well-known/openid-configuration is served on any Result host (404 on
+    api.result.dev and result.dev), so OIDC discovery is not available from Result itself.
+- id: postgrest
+  name: PostgREST query conventions
+  conforms: true
+  evidence: >-
+    The database SDK is documented as "PostgREST-style queries" with the PostgREST filter and
+    modifier vocabulary (eq/neq/gt/gte/lt/lte/like/ilike/in/is, order/limit/range/single/
+    maybeSingle) and rpc() for Postgres functions.
+- id: openapi
+  name: OpenAPI
+  conforms: false
+  evidence: >-
+    No OpenAPI or Swagger document was found. /openapi.json, /openapi.yaml, /swagger.json,
+    /v1/openapi.json, /api-docs, /docs and /redoc were probed on result.dev, api.result.dev
+    and docs.result.dev; every one 404s or returns an HTML shell. The Mintlify docs site
+    serves no docs.json/mint.json and its llms.txt indexes fifteen prose pages with no API
+    reference section. Result's documented position is that developers should use the SDK
+    rather than speak HTTP to the backend at all.
+  verified: probed 2026-08-13
+- id: asyncapi
+  name: AsyncAPI
+  conforms: false
+  evidence: >-
+    Result ships a real WebSocket realtime surface (channels, events, presence) and a payment
+    event pipeline, but publishes no AsyncAPI document and no event catalog. Channels and
+    event names are defined by each customer, not by Result.
+- id: webhooks
+  name: Outbound webhooks
+  conforms: false
+  evidence: >-
+    Deliberately absent. The payments documentation states "You do not write a webhook" —
+    Result receives every payment event, verifies its signature, handles retries and
+    out-of-order delivery, and writes the outcome into the customer's own
+    billing_customers/billing_subscriptions tables. There is no consumer-facing webhook
+    surface to catalog, so no Webhooks pointer is emitted.
+- id: rfc9457-problem-details
+  name: RFC 9457 Problem Details for HTTP APIs
+  conforms: false
+  evidence: >-
+    Errors use a proprietary { error, message, statusCode, nextActions } envelope, not
+    application/problem+json. See errors/result-error-codes.yml.
+- id: rfc9331-ratelimit-headers
+  name: RateLimit header fields for HTTP
+  conforms: false
+  evidence: >-
+    No X-RateLimit-*, RateLimit-* or Retry-After headers are documented on any surface, and
+    the status code returned on exhaustion is never stated.
+- id: rfc9116-security-txt
+  name: security.txt
+  conforms: false
+  evidence: /.well-known/security.txt returns 404 on result.dev, api.result.dev and docs.result.dev.
+  verified: probed 2026-08-13
+- id: a2a
+  name: A2A Agent Card
+  conforms: false
+  evidence: >-
+    /.well-known/agent-card.json and /.well-known/agent.json return 404 on every Result host.
+  verified: probed 2026-08-13
+- id: llms-txt
+  name: llms.txt
+  conforms: true
+  evidence: >-
+    https://docs.result.dev/llms.txt returns a well-formed llms.txt — H1, blockquote summary
+    and a Docs link list — and every page is additionally served as .md at <page>.md. Each
+    markdown page is prefixed with a documentation-index pointer back to llms.txt.
+  verified: probed 2026-08-13
+  file: llms/result-llms.txt
+- id: idempotency
+  name: Idempotent request replay
+  conforms: false
+  evidence: >-
+    No idempotency key, replay window or retry-safety contract is documented on any surface.
+- id: pci-dss
+  name: PCI DSS
+  conforms: n/a
+  evidence: >-
+    Card data never touches Result or its customers — Paddle.com is the reseller and Merchant
+    of Record for all orders, and checkout is a hosted overlay.
+- id: gdpr
+  name: GDPR
+  conforms: unstated
+  evidence: >-
+    The Privacy Policy states Result does not sell personal information and that business data
+    sent to AI models is not used to train general-purpose models, but names no regulation, no
+    data-processing addendum, no sub-processor list and no data-residency commitment.
+- id: soc2
+  name: SOC 2
+  conforms: false
+  evidence: >-
+    No trust center, no certification claim and no compliance page. trust.result.dev,
+    security.result.dev, /trust, /security and /compliance were all probed and returned
+    nothing (probe-security-programs.py: trust=none).
+  verified: probed 2026-08-13

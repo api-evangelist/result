@@ -1,0 +1,139 @@
+generated: '2026-08-13'
+method: searched
+source: >-
+  https://docs.result.dev/guides/troubleshooting, https://docs.result.dev/sdk/authentication,
+  https://docs.result.dev/sdk/payments, https://docs.result.dev/sdk/realtime,
+  https://docs.result.dev/cli/overview
+docs: https://docs.result.dev/guides/troubleshooting
+format: proprietary
+rfc9457: false
+note: >-
+  Result publishes no OpenAPI, so nothing here is derived from 4xx/5xx responses. Every code
+  below is quoted from the provider's own documentation. Result does not publish a complete
+  error-code registry — this is the set the docs name explicitly, and the provider's own
+  framing is that the envelope carries its own remediation (nextActions) rather than that
+  developers should look codes up in a table. Codes Result mentions without a fixed string
+  (the 401 on a hand-rolled HTTP call, the silent-[] RLS read) are recorded as
+  behaviours rather than invented into codes.
+envelope:
+  shape: '{ error, message, statusCode, nextActions }'
+  remediation_field: nextActions
+  cli_rendering: |
+    Error <status> (<CODE>): <what went wrong>
+      → <what to do instead>
+error_codes:
+- code: REALTIME_UNAUTHORIZED
+  surface: realtime
+  raised_on: subscribe
+  meaning: No declared channel pattern covers the requested channel.
+  action: >-
+    Declare the pattern — `npx @resultdev/cli realtime add-channel "chat:%"`. The pattern
+    alone unlocks it.
+- code: PAYMENTS_SIGN_IN_REQUIRED
+  surface: payments
+  raised_on: checkout()
+  behaviour: throws rather than opening a checkout
+  meaning: No user is signed in.
+  action: Send the buyer through sign-in first.
+  rationale: >-
+    A payment with no user attached can never grant access and cannot be repaired after the
+    money has moved.
+- code: OAUTH_REDIRECT_CROSS_ORIGIN
+  surface: auth
+  raised_on: signInWithOAuth()
+  meaning: >-
+    redirectTo is on a different origin from the page starting the sign-in. Refused up front
+    rather than opening a window whose answer can never arrive.
+  action: Keep redirectTo on the same origin; relative paths are fine.
+- code: OAUTH_POPUP_BLOCKED
+  surface: auth
+  raised_on: signInWithOAuth() in popup flow
+  meaning: The browser blocked the popup.
+  action: The returned nextActions tells the user what to allow.
+- code: OAUTH_POPUP_CLOSED
+  surface: auth
+  raised_on: signInWithOAuth() in popup flow
+  meaning: The user closed the sign-in window.
+  action: >-
+    Not an error state to write copy for — treat a cancelled sign-in as a no-op.
+- code: AI_UPSTREAM_UNAVAILABLE
+  surface: ai
+  raised_on: chat completion with image or audio input
+  meaning: The selected model could not serve the multimodal request upstream.
+  action: >-
+    Use google/gemini-2.5-flash, the verified model for image and audio input. Audio must be
+    wav/mp3/aiff/aac/ogg/flac/m4a; MediaRecorder webm is rejected.
+- code: INVALID_INPUT
+  surface: cli
+  status: 400
+  meaning: Generic input validation failure; the example error format in the CLI docs.
+  action: Read the printed nextActions line.
+documented_failures_without_codes:
+- surface: storage
+  condition: upload() or list() called by an anonymous caller
+  observed: '"permission denied"'
+  action: signUp() or signInWithPassword() first — uploads and listing require a signed-in user.
+- surface: database
+  condition: insert() passed an object instead of an array
+  observed: silent failure or HTTP 400
+  action: '.insert([{ title: "Hi" }]) — always an array.'
+- surface: database
+  condition: write to an RLS table with no policy
+  observed: HTTP 403, Postgres error code 42501
+  action: >-
+    Recreate the table through `result db create-table` with a user_id:uuid column so the
+    owner policy is generated, or add a policy with `result db migrate`.
+- surface: database
+  condition: read from an RLS table with no policy
+  observed: empty array, NO error — a silent zero
+  action: >-
+    Same fix. The docs flag this asymmetry explicitly: reads fail silently as [] while writes
+    403, so an empty result set is the diagnostic signal.
+- surface: database
+  condition: rows created with the admin key have no user_id matching the session
+  observed: signed-in queries return no rows
+  action: Backfill user_id, or recreate the rows as the user.
+- surface: functions
+  condition: '@resultdev/sdk older than 0.3.0 invoking from the browser'
+  observed: '"Failed to fetch"'
+  action: Upgrade the SDK — older versions routed browser calls through a retired host.
+- surface: realtime
+  condition: '@resultdev/sdk older than 0.3.0'
+  observed: publishes succeed but subscribers receive nothing
+  action: >-
+    Upgrade — older versions tagged incoming messages with a prefixed channel name so filters
+    never matched. Confirm the channel pattern is declared.
+- surface: auth
+  condition: no getCurrentUser() call on mount
+  observed: a signed-in user appears signed out after reload
+  action: >-
+    Call getCurrentUser() when the app mounts; onAuthStateChange() reports changes only.
+    Requires SDK 0.7.0+ — before that the session rode a cookie Safari, incognito windows and
+    framed previews refuse to send.
+- surface: auth
+  condition: UI with only signed-in and signed-out states
+  observed: login screen flashes on every reload
+  action: Keep a loading state; render nothing auth-dependent until getCurrentUser() resolves.
+- surface: database
+  condition: migration name or SQL rejected
+  observed: migration rejected
+  action: >-
+    Names allow lowercase letters, numbers and hyphens only; SQL must not contain
+    BEGIN/COMMIT because the migration already runs in one transaction.
+- surface: http
+  condition: hand-rolled HTTP call against the backend
+  observed: HTTP 401
+  action: >-
+    Use the SDK or CLI. End-user calls send `Authorization: Bearer <publishable key>`, not an
+    x-api-key header.
+- surface: mcp
+  condition: unauthenticated request to https://api.result.dev/mcp
+  observed: 'HTTP 401 {"error":"invalid_token","error_description":"No authorization provided"}'
+  www_authenticate: 'Bearer error="invalid_token", resource_metadata="https://api.result.dev/.well-known/oauth-protected-resource"'
+  action: Complete the OAuth 2.1 authorization-code flow; see scopes/result-scopes.yml.
+  verified: probed 2026-08-13
+debugging_workflow:
+- npx @resultdev/cli status — does the table/bucket/function exist at all?
+- npx @resultdev/cli logs — pick a source, read recent entries.
+- npx @resultdev/cli auth users — did the signup actually land?
+- Check error.nextActions on the failing SDK call.

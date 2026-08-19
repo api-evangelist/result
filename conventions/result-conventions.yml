@@ -1,0 +1,159 @@
+generated: '2026-08-13'
+method: searched
+source: https://docs.result.dev/ (all 15 documentation pages, fetched 2026-08-13)
+note: >-
+  Cross-cutting request/response semantics for Result Backend, searched from the provider's
+  documentation. Result publishes no OpenAPI, so nothing here is derived from a spec. The
+  overriding convention Result states is that developers should NOT speak HTTP to the
+  backend at all — application code uses @resultdev/sdk with the publishable key, and
+  one-time setup uses @resultdev/cli with the admin key. The docs call a hand-rolled HTTP
+  call out by name as a cause of unexplained 401s.
+authentication:
+  style: bearer
+  detail: see authentication/result-authentication.yml
+  app_calls: 'Authorization: Bearer <publishable key>, plus the SDK-managed user session'
+  admin_calls: BACKEND_ADMIN_KEY via the CLI, terminal/server only
+  rule: >-
+    "App code → SDK with the publishable key. One-time setup (tables, migrations, buckets,
+    channels, functions, secrets) → CLI with the admin key, from the terminal."
+error_envelope:
+  shape: '{ error, message, statusCode, nextActions }'
+  fields:
+  - name: error
+    description: machine-readable error code, SCREAMING_SNAKE_CASE
+  - name: message
+    description: human-readable description of what went wrong
+  - name: statusCode
+    description: HTTP status
+  - name: nextActions
+    description: >-
+      remediation guidance — what to do instead. This is the distinguishing feature of
+      Result's error contract: every backend error carries its own fix, the CLI prints it
+      automatically, and the docs instruct developers to read error.nextActions on any
+      failing SDK call as step 4 of the debugging workflow.
+  format: proprietary
+  rfc9457: false
+  catalog: errors/result-error-codes.yml
+  sdk_return_shape: >-
+    SDK calls resolve to { data, error } rather than throwing, so an error is inspected on
+    the result object. Notable exception: payments.checkout() throws
+    PAYMENTS_SIGN_IN_REQUIRED.
+idempotency:
+  supported: false
+  header: null
+  note: >-
+    Result documents no idempotency key, no request-replay window and no retry-safety
+    contract on any surface — not on database writes, not on function invocation, not on
+    payments checkout. Recorded as an honest absence; NO Idempotency pointer is emitted in
+    apis.yml. The nearest thing the provider ships is idempotence at the tooling layer:
+    `result init` and `functions deploy` are documented as safe to re-run, and
+    support.mount()/unmount() are safe to call more than once.
+  adjacent_guarantees:
+  - Payment events are handled by Result, which "verifies its signature, handles retries and
+    out-of-order delivery" server-side, so the developer never writes a webhook handler and
+    never faces duplicate delivery.
+pagination:
+  style: postgrest
+  note: >-
+    Database reads are PostgREST-style chained queries rather than a paged envelope. There
+    is no cursor, no page token, and no pagination metadata in the response.
+  modifiers: [order, limit, range, single, maybeSingle]
+  filters: [eq, neq, gt, gte, lt, lte, like, ilike, in, is]
+  rpc: 'backend.database.rpc("fn_name", { arg: 1 })'
+  example: 'backend.database.from("posts").select().order("created_at", { ascending: false })'
+  gotcha: >-
+    insert() takes an ARRAY. .insert({...}) silently fails or 400s; .insert([{...}]) is
+    correct. The docs list this as a top troubleshooting entry.
+  limits:
+  - surface: email
+    limit: max 50 recipients per send
+  - surface: analytics
+    limit: custom event name capped at 64 characters
+authorization_model:
+  mechanism: PostgreSQL row-level security
+  default: on
+  owner_policy: >-
+    A table created through `result db create-table` with a `user_id:uuid` column gets an
+    owner policy automatically — rows scope to the signed-in user and user_id defaults from
+    the session on insert.
+  failure_mode: >-
+    An RLS table with ZERO policies denies everything, and it fails asymmetrically: writes
+    return 403 with Postgres code 42501, but reads return an empty array with no error. A
+    silent [] is the signature of a missing policy, not of missing data.
+  opt_outs: ['--no-policy (skip the owner policy)', '--no-rls (shared/public data)']
+  custom_policies: policy SQL through `result db migrate`
+versioning:
+  api: unversioned
+  note: >-
+    Result publishes no API version, no version header, no dated release train and no URI
+    version segment. Versioning is expressed entirely through the npm packages — behaviour
+    is pinned to SDK versions in the docs (session persistence requires 0.7.0+, browser
+    function invocation and realtime channel filtering require 0.3.0+), which makes the
+    installed client version the de facto contract version.
+  see: lifecycle/result-lifecycle.yml
+rate_limit_signaling:
+  documented_headers: []
+  note: >-
+    No X-RateLimit-* or RateLimit-* response headers, no Retry-After and no documented
+    429 behaviour appear anywhere in the documentation. The only published limits are on the
+    support API, stated as prose. See rate-limits/result-rate-limits.yml.
+request_tracing:
+  request_id_header: null
+  note: No request-id or correlation header is documented. Debugging is directed through
+    `result logs <source>` and `result status` instead.
+metadata:
+  mechanism: >-
+    payments.checkout() accepts a customData object, described as "extra fields echoed back
+    on payment events". No general-purpose metadata convention exists across other surfaces.
+data_defaults:
+  every_table_has: [id (uuid), created_at, updated_at]
+  rule: never declare these columns yourself
+realtime:
+  transport: WebSocket
+  ordering:
+  - connect() before anything else
+  - publish() requires a prior subscribe() to the same channel
+  - unsubscribe(channel) to leave
+  channel_declaration: >-
+    A channel pattern must be declared with the CLI before any client can subscribe; % is a
+    wildcard. Subscribing to an undeclared channel fails with REALTIME_UNAUTHORIZED, and the
+    pattern alone unlocks it.
+  presence:
+  - res.presence.members on subscribe
+  - 'presence:join / presence:leave events'
+  - getPresenceState(channel)
+functions:
+  runtime: Deno
+  interface: standard fetch Request/Response, ESM imports, no bundler
+  path: $NEXT_PUBLIC_BACKEND_URL/functions/<name>
+  secrets: 'Deno.env.get("KEY"), set with `result secrets set`'
+  trust_boundary: >-
+    The docs define the function as the trust boundary: anything involving secrets, spend
+    (AI calls, email sends) or trust (payments, fulfillment) belongs in a function, because
+    a stranger holding the publishable key can otherwise drive it directly.
+money:
+  amount_representation: >-
+    Plan `amount` is a STRING in the currency's lowest denomination, and the docs warn it is
+    not always hundredths — "1200" in JPY is ¥1,200, not ¥12. `formattedTotal` is the
+    display-ready value, localized to the visitor's country and currency with tax applied.
+  entitlement_rule: >-
+    Never grant access from a success URL, redirect or checkout callback — the buyer can
+    close the tab first. Read payments.hasAccess(), which reflects what the payment actually
+    wrote. Access is granted for active, trialing AND past_due.
+migrations:
+  naming: lowercase letters, numbers and hyphens only (the CLI normalizes)
+  transaction: >-
+    A migration already runs in one transaction; SQL containing BEGIN/COMMIT is rejected.
+  versioning: automatic
+secrets:
+  deletion: >-
+    Documented as unreliable on current backend versions. Secrets are effectively permanent;
+    rotate by setting a new key rather than deleting.
+cross_links:
+  errors: errors/result-error-codes.yml
+  authentication: authentication/result-authentication.yml
+  scopes: scopes/result-scopes.yml
+  lifecycle: lifecycle/result-lifecycle.yml
+  rate_limits: rate-limits/result-rate-limits.yml
+  sandbox: sandbox/result-sandbox.yml
+  data_model: data-model/result-data-model.yml

@@ -1,0 +1,153 @@
+generated: '2026-08-13'
+method: searched
+source: https://docs.result.dev/cli/reference
+docs:
+- https://docs.result.dev/cli/overview
+- https://docs.result.dev/cli/reference
+cli:
+  name: result
+  package: '@resultdev/cli'
+  invocation: npx @resultdev/cli <command>
+  install: npx @resultdev/cli init
+  version: 0.4.2
+  role: >-
+    The admin half of Result Backend. Everything requiring the admin key — tables,
+    migrations, buckets, realtime channel patterns, functions, secrets, payment keys and
+    frontend deployments — is a CLI operation. Application code never does these; it uses
+    @resultdev/sdk with the publishable key.
+credentials:
+  reads: [.env.local, .env]
+  variables:
+  - name: NEXT_PUBLIC_BACKEND_URL
+    description: backend base URL
+  - name: BACKEND_ADMIN_KEY
+    description: admin key — server/terminal only, never in the browser
+  global_flags:
+  - flag: --url <url>
+    note: must be passed BEFORE the command
+  - flag: --key <key>
+    note: must be passed BEFORE the command
+commands:
+- group: init
+  commands:
+  - command: result init
+    description: >-
+      Verifies credentials against the live backend, then persists the backend rules into
+      AGENTS.md (a marked section, safe to re-run) and creates CLAUDE.md pointing at
+      AGENTS.md if absent. Idempotent.
+    agent_relevance: >-
+      This is a provider-published agent-instruction generator — Result writes its own
+      operating rules into the repo so a future AI coding session reads them without being
+      told. The generated AGENTS.md is written locally per project and is not fetchable
+      from a public URL.
+- group: status
+  commands:
+  - command: result status
+    description: Tables (with row counts), buckets, functions and auth at a glance.
+- group: db
+  commands:
+  - command: result db tables
+    description: List tables.
+  - command: result db schema <table>
+    description: One table's columns as JSON.
+  - command: result db create-table <name> -c "<col spec>"
+    description: >-
+      Create a table. Column spec is name:type[:required][:unique]; types are string,
+      integer, float, boolean, datetime, date, json, uuid. id, created_at and updated_at are
+      added automatically and must never be specified.
+    flags:
+    - flag: --no-policy
+      description: skip the generated owner policy on a table with a user_id uuid column
+    - flag: --no-rls
+      description: disable row-level security for shared/public data
+  - command: result db migrate --name <name> --sql "<sql>"
+    description: >-
+      Raw SQL for anything create-table cannot express — indexes, custom RLS policies,
+      triggers, extensions such as pgvector. Versioning is automatic and the migration runs
+      in one transaction, so BEGIN/COMMIT must not appear in the SQL.
+    flags:
+    - flag: --file <path>
+      description: read the SQL from a file instead of the flag
+  - command: result db migrations
+    description: List applied migrations.
+- group: storage
+  commands:
+  - command: result storage buckets
+    description: List buckets.
+  - command: result storage create-bucket <name>
+    description: Create a public bucket — files get stable URLs.
+    flags:
+    - flag: --private
+      description: private bucket; access via signed URLs only
+- group: realtime
+  commands:
+  - command: result realtime channels
+    description: List declared channel patterns.
+  - command: result realtime add-channel "<pattern>"
+    description: >-
+      Declare a channel pattern; % is a wildcard, so chat:% covers chat:room-1 and friends.
+      Clients cannot subscribe until a pattern covers the channel.
+    flags:
+    - flag: --description <text>
+- group: functions
+  commands:
+  - command: result functions list
+    description: List deployed functions.
+  - command: result functions deploy <name> --file <file>
+    description: >-
+      Create or update a serverless Deno function. It runs at
+      $NEXT_PUBLIC_BACKEND_URL/functions/<name>.
+- group: secrets
+  commands:
+  - command: result secrets list
+    description: List your secret keys; values are never shown.
+  - command: result secrets set KEY=value [KEY=value ...]
+    description: >-
+      Store secrets, read inside functions with Deno.env.get(). Treat as permanent —
+      deletion is unreliable on current backend versions; rotate by setting a new key.
+- group: deployments
+  commands:
+  - command: result deployments deploy [dir]
+    description: >-
+      Upload source, build remotely and go live on Result hosting. node_modules, .git, build
+      output and .env* files never upload. Polls up to 5 minutes and prints the live URL.
+    flags:
+    - flag: --env KEY=value
+      description: saves the variable and applies it to that build
+  - command: result deployments list
+    description: Deployment history.
+  - command: result deployments status <id>
+    description: One deploy, with its error if it failed.
+  - command: result deployments cancel <id>
+    description: Stop a build still in progress.
+  - command: result deployments env list
+    description: Build variables; values never shown.
+  - command: result deployments env set KEY=value
+    description: Applies from the next deploy.
+  - command: result deployments env delete <id>
+    description: id comes from `env list`.
+- group: auth
+  commands:
+  - command: result auth users
+    description: Admin view of signed-up users.
+- group: logs
+  commands:
+  - command: result logs
+    description: List log sources.
+  - command: result logs <source> --limit <n>
+    description: Read one source, e.g. `result logs backend.logs --limit 20`.
+- group: payments
+  commands:
+  - command: result payments status
+    description: Whether this app is set up to take money.
+  - command: result payments plans
+    description: The plan ids to use in checkout().
+errors:
+  format: |
+    Error <status> (<CODE>): <what went wrong>
+      → <what to do instead>
+  note: >-
+    The CLI prints the backend's own nextActions remediation hint automatically on every
+    failure. See errors/result-error-codes.yml.
+help:
+  per_command: result <command> --help
