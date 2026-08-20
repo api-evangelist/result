@@ -44,6 +44,24 @@ modified: '2026-08-13'
 tags:
 - Company
 - Business Operations
+- Software-as-a-Service
+- Entrepreneurship
+- Payments
+- Marketing
+- No-Code
+- Startups
+- Artificial Intelligence
+- Backend-as-a-Service
+- MCP
+- Agents
+- Database
+- Authentication
+- Storage
+- Serverless
+- Real-Time
+tags_raw:
+- Company
+- Business Operations
 - SaaS
 - Entrepreneurship
 - Payments
@@ -70,6 +88,10 @@ apis:
   humanURL: https://result.dev/mcp
   baseURL: https://api.result.dev/mcp
   tags:
+  - MCP
+  - Agents
+  - Business Operations
+  tags_raw:
   - Model Context Protocol
   - Agents
   - Business Operations
@@ -97,6 +119,13 @@ apis:
     name a shared production host, so no fixed baseURL is recorded rather than guessing
     one from the domain.
   tags:
+  - Backend-as-a-Service
+  - Database
+  - Authentication
+  - Storage
+  - Serverless
+  - Real-Time
+  tags_raw:
   - Backend as a Service
   - Database
   - Authentication
@@ -124,6 +153,9 @@ apis:
     (`https://support.${label}.withresult.com`). withresult.com is a Result-controlled
     wildcard domain on the same Cloudflare nameservers as result.dev.
   tags:
+  - Customer-Support
+  - Embedded Components
+  tags_raw:
   - Customer Support
   - Embedded Components
   properties:
