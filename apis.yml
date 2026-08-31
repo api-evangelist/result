@@ -62,7 +62,7 @@ tags:
 - No-Code
 - Startups
 - Artificial Intelligence
-- Backend-as-a-Service
+- Backend as a Service
 - MCP
 - Agents
 - Database
@@ -130,7 +130,7 @@ apis:
     name a shared production host, so no fixed baseURL is recorded rather than guessing
     one from the domain.
   tags:
-  - Backend-as-a-Service
+  - Backend as a Service
   - Database
   - Authentication
   - Storage
