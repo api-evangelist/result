@@ -84,3 +84,16 @@ x-evidence:
   url: https://api.result.dev/.well-known/oauth-protected-resource
   http_status: 200
   content_type: application/json
+rfc9728:
+  endpoint: https://api.result.dev/mcp
+  metadata_url: https://api.result.dev/.well-known/oauth-protected-resource
+  discovered_via: WWW-Authenticate resource_metadata on an anonymous POST initialize
+  fetched: '2026-09-25'
+  http_status: 200
+  content_type: application/json
+  document:
+    resource: https://api.result.dev/mcp
+    authorization_servers:
+    - https://api.descope.com/v1/apps/P3HVe6On8gLt3t2puHvHToMFQit2
+    scopes_supported:
+    - full-access
