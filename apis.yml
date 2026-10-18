@@ -164,7 +164,7 @@ apis:
     (`https://support.${label}.withresult.com`). withresult.com is a Result-controlled
     wildcard domain on the same Cloudflare nameservers as result.dev.
   tags:
-  - Customer Support
+  - Customer Service
   - Embedded Components
   tags_raw:
   - Customer Support
